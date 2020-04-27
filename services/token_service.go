@@ -1,11 +1,9 @@
 package services
 
 import (
-	"github.com/chunganhbk/simple-user-service/models"
 	pb "github.com/chunganhbk/simple-user-service/proto/auth"
-	"time"
 	"github.com/chunganhbk/simple-user-service/repository"
-
+	"time"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -24,19 +22,14 @@ type CustomClaims struct {
 	User *pb.User
 	jwt.StandardClaims
 }
-type Repository interface {
-	GetAll() ([]*pb.User, error)
-	Get(id string) (*pb.User, error)
-	Create(user *pb.User) error
-	GetByEmail(email string) (*pb.User, error)
-}
+
 
 type Authable interface {
 	Decode(token string) (*CustomClaims, error)
 	Encode(user  *pb.User) (string, error)
 }
 type TokenService struct {
-     repo Repository
+     Repo repository.Repository
 }
 
 // Decode a token string into a token object

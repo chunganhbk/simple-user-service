@@ -5,19 +5,20 @@ import (
 	"errors"
 	"fmt"
 	pb "github.com/chunganhbk/simple-user-service/proto/auth"
+	"github.com/chunganhbk/simple-user-service/repository"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 )
 
 const topic = "user.created"
 
-type userService struct {
-	repo         Repository
-	tokenService Authable
+type UserService struct {
+	Repo         repository.Repository
+	TokenService Authable
 }
 
-func (srv *userService) Get(ctx context.Context, req *pb.User, res *pb.Response) error {
-	user, err := srv.repo.Get(req.Id)
+func (srv *UserService) Get(ctx context.Context, req *pb.User, res *pb.Response) error {
+	user, err := srv.Repo.Get(req.Id)
 	if err != nil {
 		return err
 	}
@@ -25,8 +26,8 @@ func (srv *userService) Get(ctx context.Context, req *pb.User, res *pb.Response)
 	return nil
 }
 
-func (srv *userService) GetAll(ctx context.Context, req *pb.Request, res *pb.Response) error {
-	users, err := srv.repo.GetAll()
+func (srv *UserService) GetAll(ctx context.Context, req *pb.Request, res *pb.Response) error {
+	users, err := srv.Repo.GetAll()
 	if err != nil {
 		return err
 	}
@@ -34,9 +35,9 @@ func (srv *userService) GetAll(ctx context.Context, req *pb.Request, res *pb.Res
 	return nil
 }
 
-func (srv *userService) Auth(ctx context.Context, req *pb.User, res *pb.Token) error {
+func (srv *UserService) Auth(ctx context.Context, req *pb.User, res *pb.Token) error {
 	log.Println("Logging in with:", req.Email, req.Password)
-	user, err := srv.repo.GetByEmail(req.Email)
+	user, err := srv.Repo.GetByEmail(req.Email)
 	log.Println(user, err)
 	if err != nil {
 		return err
@@ -48,7 +49,7 @@ func (srv *userService) Auth(ctx context.Context, req *pb.User, res *pb.Token) e
 		return err
 	}
 
-	token, err := srv.tokenService.Encode(user)
+	token, err := srv.TokenService.Encode(user)
 	if err != nil {
 		return err
 	}
@@ -56,7 +57,7 @@ func (srv *userService) Auth(ctx context.Context, req *pb.User, res *pb.Token) e
 	return nil
 }
 
-func (srv *userService) Create(ctx context.Context, req *pb.User, res *pb.Response) error {
+func (srv *UserService) Create(ctx context.Context, req *pb.User, res *pb.Response) error {
 
 	log.Println("Creating user: ", req)
 
@@ -67,11 +68,11 @@ func (srv *userService) Create(ctx context.Context, req *pb.User, res *pb.Respon
 	}
 
 	req.Password = string(hashedPass)
-	if err := srv.repo.Create(req); err != nil {
+	if err := srv.Repo.Create(req); err != nil {
 		return errors.New(fmt.Sprintf("error creating user: %v", err))
 	}
 
-	token, err := srv.tokenService.Encode(req)
+	token, err := srv.TokenService.Encode(req)
 	if err != nil {
 		return err
 	}
@@ -87,10 +88,10 @@ func (srv *userService) Create(ctx context.Context, req *pb.User, res *pb.Respon
 	return nil
 }
 
-func (srv *userService) ValidateToken(ctx context.Context, req *pb.Token, res *pb.Token) error {
+func (srv *UserService) ValidateToken(ctx context.Context, req *pb.Token, res *pb.Token) error {
 
 	// Decode token
-	claims, err := srv.tokenService.Decode(req.Token)
+	claims, err := srv.TokenService.Decode(req.Token)
 
 	if err != nil {
 		return err

@@ -1,27 +1,30 @@
 package main
 
 import (
-	"fmt"
-	"github.com/chunganhbk/simple-user-service/services"
-	"github.com/chunganhbk/simple-user-service/repository"
-
 	"github.com/chunganhbk/simple-user-service/database"
+	"github.com/chunganhbk/simple-user-service/repository"
+	"github.com/chunganhbk/simple-user-service/services"
+	"github.com/joho/godotenv"
+
 	pb "github.com/chunganhbk/simple-user-service/proto/auth"
 	"github.com/micro/go-micro/v2"
 	log "github.com/micro/go-micro/v2/logger"
 )
 
 func main() {
-	_, err := database.Storage.Connect()
+	err := godotenv.Load()
 	if err != nil {
-		fmt.Println("Error: Failed to load database")
+		log.Fatal("Error loading .env file")
 	}
-	defer database.Storage.Close()
+
+	db, err := database.CreateDBConnection()
 
 	if err != nil {
 		log.Fatalf("Could not connect to DB: %v", err)
 	}
-	// New Service
+	defer db.Close()
+	var repo = &repository.UserRepository{db}
+	var tokenService = &services.TokenService{repo} // New Service
 	service := micro.NewService(
 		micro.Name("go.micro.service.user"),
 		micro.Version("latest"),
@@ -29,14 +32,12 @@ func main() {
 
 	// Initialise service
 	service.Init()
-	repo := &repository.UserRepository{ database.Storage.DB}
-
-	tokenService := &services.TokenService{database.DBStorage}
 	// Register Handler
-	//pb.RegisterAuthHandler(service.Server(), &services.userService{ repo, tokenService})
+	pb.RegisterAuthHandler(service.Server(), &services.UserService{ repo, tokenService})
 
 	// Run service
 	if err := service.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
+
