@@ -23,8 +23,8 @@ func main() {
 		log.Fatalf("Could not connect to DB: %v", err)
 	}
 	defer db.Close()
-	var repo = &repository.UserRepository{db}
-	var tokenService = &services.TokenService{repo} // New Service
+	var repo = &repository.UserRepository{DB: db}
+	var tokenService = &services.TokenService{Repo: repo} // New Service
 	service := micro.NewService(
 		micro.Name("go.micro.service.user"),
 		micro.Version("latest"),
@@ -33,7 +33,7 @@ func main() {
 	// Initialise service
 	service.Init()
 	// Register Handler
-	pb.RegisterAuthHandler(service.Server(), &services.UserService{ repo, tokenService})
+	pb.RegisterAuthHandler(service.Server(), &services.UserService{ Repo: repo, TokenService: tokenService})
 
 	// Run service
 	if err := service.Run(); err != nil {

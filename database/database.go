@@ -15,10 +15,7 @@ func  CreateDBConnection() (*gorm.DB, error) {
 	user := os.Getenv("DB_USER")
 	DBName := os.Getenv("DB_NAME")
 	password := os.Getenv("DB_PASSWORD")
-	fmt.Println(fmt.Sprintf(
-		"%s:%s@(%s)/%s?charset=utf8&parseTime=True&loc=Local",
-		user, password, host, DBName,
-	))
+
 	return gorm.Open(
 		"mysql",
 		fmt.Sprintf(
